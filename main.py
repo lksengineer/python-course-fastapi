@@ -1,5 +1,5 @@
 # Project-related libraries (installed via pip)
-from fastapi import FastAPI
+from fastapi import FastAPI, Body
 from fastapi.responses import HTMLResponse
 
 
@@ -70,3 +70,17 @@ def get_movies_by_category(category: str, year: int):
 
     # Solution of the teacher
     return [item for item in movies if item['category'] == category]
+
+
+@app.post('/movies', tags=["movies"])
+def create_movie(id: int = Body(), title: str = Body(), overview: str = Body(), year: int = Body(), rating: float = Body(), category: str = Body()):
+    """Function Create movie."""
+    movies.append({
+        "id": id,
+        "title": title,
+        "overview": overview,
+        "year": year,
+        "rating": rating,
+        "category": category
+        })
+    return movies
