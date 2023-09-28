@@ -53,3 +53,20 @@ def get_movie(id: int):
         if item["id"] == id:
             return item
     return []
+
+
+@app.get('/movies/', tags=["movies"])
+def get_movies_by_category(category: str, year: int):
+    """Function Get movies by category"""
+    # return category, year
+    # for item in movies:
+    #     if item["category"] == category:
+    #         return item
+    # return []
+
+    # # My Solution
+    # movie = list(filter(lambda item: item["category"] == category, movies))
+    # return movie if len(movie) > 0 else []
+
+    # Solution of the teacher
+    return [item for item in movies if item['category'] == category]
