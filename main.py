@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 from typing import Optional
 
 # Project-related libraries (installed via pip)
-from fastapi import FastAPI  # , Body
+from fastapi import FastAPI, Path, Query  # , Body
 from fastapi.responses import HTMLResponse
 
 
@@ -75,7 +75,7 @@ def get_movies():
 
 
 @app.get('/movies/{id}', tags=["movies"])
-def get_movie(id: int):
+def get_movie(id: int = Path(ge=1, le=200)):
     """Get movie function"""
     for item in movies:
         if item["id"] == id:
@@ -84,7 +84,7 @@ def get_movie(id: int):
 
 
 @app.get('/movies/', tags=["movies"])
-def get_movies_by_category(category: str, year: int):
+def get_movies_by_category(category: str = Query(min_length=6, max_length=20)):
     """Function Get movies by category"""
     # return category, year
     # for item in movies:
