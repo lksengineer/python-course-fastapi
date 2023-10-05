@@ -80,7 +80,11 @@ def message():
 @app.post('/login', tags=["auth"])
 def login(user: User):
     """Login Function"""
-    return user
+    if user.email == "admin@gmail.com" and user.password == "admin":
+        token: str = create_token(user.model_dump())
+        # token: str = create_token(user.dict())
+        return JSONResponse(status_code=200, content=token)
+    return JSONResponse(status_code=404, content={"message": "USER NOT FOUND"})
 
 
 @app.get('/movies', tags=["movies"], response_model=List[Movie], status_code=200)
