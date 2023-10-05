@@ -6,6 +6,9 @@ from typing import Optional, List
 from fastapi import FastAPI, Path, Query  # , Body
 from fastapi.responses import HTMLResponse, JSONResponse
 
+# Own modules
+from jwt_manager import create_token
+
 
 # app = FastAPI()
 # app.title = "My Movie app with FastAPI"
@@ -16,6 +19,12 @@ app = FastAPI(
     description='An API to learn learning FASTAPI',
     version='0.0.1',
     )
+
+
+class User(BaseModel):
+    """User class. Sub class"""
+    email: str
+    password: str
 
 
 class Movie(BaseModel):
@@ -66,6 +75,12 @@ def message():
     """Message function"""
     return HTMLResponse("<h1>Hello world!</h1>")
     # return {"name": "Luis", "last_name": "Saavedra", "age": 33}
+
+
+@app.post('/login', tags=["auth"])
+def login(user: User):
+    """Login Function"""
+    return user
 
 
 @app.get('/movies', tags=["movies"], response_model=List[Movie], status_code=200)
