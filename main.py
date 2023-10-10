@@ -3,11 +3,15 @@ from pydantic import BaseModel, Field
 from typing import Optional, List
 
 # Project-related libraries (installed via pip)
-from fastapi import FastAPI, Path, Query  # , Body
+from fastapi import Depends, FastAPI, HTTPException, Path, Query, Request  # , Body
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.security import HTTPBearer
 
 # Own modules
-from jwt_manager import create_token
+from config.database import Session, engine, Base
+from jwt_manager import create_token, validate_token
+from models.movie import Movie as MovieModel
 
 
 # app = FastAPI()
@@ -19,6 +23,17 @@ app = FastAPI(
     description='An API to learn learning FASTAPI',
     version='0.0.1',
     )
+
+Base.metadata.create_all(bind=engine)
+
+
+class JWTBearer(HTTPBearer):
+    """Class JWTBearer. Subclass"""
+    async def __call__(self, request: Request):
+        auth = await super().__call__(request)
+        data = validate_token(auth.credentials)
+        if data['email'] != "admin@gmail.com":
+            raise HTTPException(status_code=403, detail="Credenciales son invalidas")
 
 
 class User(BaseModel):
@@ -35,6 +50,18 @@ class Movie(BaseModel):
     year: int = Field(le=2023)
     rating: float = Field(ge=0, le=10)
     category: str = Field(min_length=6, max_length=20)
+
+    # class Config:
+    #     schema_extra = {
+    #         "example": {
+    #             "id": 1,
+    #             "title": "Mi película",
+    #             "overview": "Descripción de la película",
+    #             "year": 2022,
+    #             "rating": 9.8,
+    #             "category": "Acción"
+    #         }
+    #     }
 
     model_config = {
         "json_schema_extra": {
@@ -87,20 +114,30 @@ def login(user: User):
     return JSONResponse(status_code=404, content={"message": "USER NOT FOUND"})
 
 
-@app.get('/movies', tags=["movies"], response_model=List[Movie], status_code=200)
+@app.get('/movies', tags=["movies"], response_model=List[Movie], status_code=200, dependencies=[Depends(JWTBearer())])
 def get_movies() -> List[Movie]:
     """Get movie function"""
     # return movies
-    return JSONResponse(status_code=200, content=movies)
+    db = Session()
+    result = db.query(MovieModel).all()
+    # return JSONResponse(status_code=200, content=movies)
+    return JSONResponse(status_code=200, content=jsonable_encoder(result))
 
 
 @app.get('/movies/{id}', tags=["movies"], response_model=Movie)
 def get_movie(id: int = Path(ge=1, le=200)) -> Movie:
     """Get movie function"""
-    for item in movies:
-        if item["id"] == id:
-            return JSONResponse(content=item)
-    return JSONResponse(status_code=404, content=[])
+    # Sin  base de datos
+    # for item in movies:
+    #     if item["id"] == id:
+    #         return JSONResponse(content=item)
+    # return JSONResponse(status_code=404, content=[])
+    # Con base de datos
+    db = Session()
+    result = db.query(MovieModel).filter(MovieModel.id == id).first()
+    if not result:
+        return JSONResponse(status_code=404, content={'message': "Not Found"})
+    return JSONResponse(status_code=200, content=jsonable_encoder(result))
 
 
 @app.get('/movies/', tags=["movies"], response_model=List[Movie])
@@ -125,8 +162,12 @@ def get_movies_by_category(category: str = Query(min_length=6, max_length=20)) -
 @app.post('/movies', tags=["movies"], response_model=dict, status_code=201)
 def create_movie(movie: Movie) -> dict:
     """Function Create movie. Post method."""
-    movies.append(movie)
+    # movies.append(movie.dict())
     # return movies
+    db = Session()
+    new_movie = MovieModel(**movie.dict())
+    db.add(new_movie)
+    db.commit()
     return JSONResponse(status_code=201, content={"message": "Succesfully Register"})
 
 
