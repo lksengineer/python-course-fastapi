@@ -28,7 +28,6 @@ Base.metadata.create_all(bind=engine)
 
 
 class JWTBearer(HTTPBearer):
-    """Class JWTBearer. Subclass"""
     async def __call__(self, request: Request):
         auth = await super().__call__(request)
         data = validate_token(auth.credentials)
@@ -155,8 +154,13 @@ def get_movies_by_category(category: str = Query(min_length=6, max_length=20)) -
 
     # Solution of the teacher
     # return [item for item in movies if item['category'] == category]
-    data = [item for item in movies if item['category'] == category]
-    return JSONResponse(content=data)
+    # data = [item for item in movies if item['category'] == category]
+    # return JSONResponse(content=data)
+    db = Session()
+    result = db.query(MovieModel).filter(MovieModel.category == category).all()
+    if not result:
+        return JSONResponse(status_code=404, content={'message': "Not Found"})
+    return JSONResponse(status_code=200, content=jsonable_encoder(result))
 
 
 @app.post('/movies', tags=["movies"], response_model=dict, status_code=201)
