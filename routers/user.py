@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse
 from jwt_manager import create_token
 
 
-login_router = APIRouter()
+user_router = APIRouter()
 
 
 class User(BaseModel):
@@ -18,11 +18,11 @@ class User(BaseModel):
     password: str
 
 
-@login_router.post('/login', tags=["auth"])
+@user_router.post('/login', tags=["auth"])
 def login(user: User):
     """Login Function"""
     if user.email == "admin@gmail.com" and user.password == "admin":
-        token: str = create_token(user.dict())
+        token: str = create_token(user.model_dump())
         # token: str = create_token(user.dict())
         return JSONResponse(status_code=200, content=token)
     return JSONResponse(status_code=404, content={"message": "USER NOT FOUND"})

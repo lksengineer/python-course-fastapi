@@ -12,6 +12,7 @@ from fastapi.encoders import jsonable_encoder
 from config.database import Session
 from models.movie import Movie as MovieModel
 from middlewares.jwt_bearer import JWTBearer
+from services.movie import MovieService
 
 
 movie_router = APIRouter()
@@ -55,24 +56,16 @@ class Movie(BaseModel):
 @movie_router.get('/movies', tags=["movies"], response_model=List[Movie], status_code=200, dependencies=[Depends(JWTBearer())])
 def get_movies() -> List[Movie]:
     """Get movie function"""
-    # return movies
     db = Session()
-    result = db.query(MovieModel).all()
-    # return JSONResponse(status_code=200, content=movies)
+    result = MovieService(db).get_movies()
     return JSONResponse(status_code=200, content=jsonable_encoder(result))
 
 
 @movie_router.get('/movies/{id}', tags=["movies"], response_model=Movie)
 def get_movie(id: int = Path(ge=1, le=200)) -> Movie:
     """Get movie function"""
-    # Sin  base de datos
-    # for item in movies:
-    #     if item["id"] == id:
-    #         return JSONResponse(content=item)
-    # return JSONResponse(status_code=404, content=[])
-    # Con base de datos
     db = Session()
-    result = db.query(MovieModel).filter(MovieModel.id == id).first()
+    result = MovieService(db).get_movie(id)
     if not result:
         return JSONResponse(status_code=404, content={'message': "Not Found"})
     return JSONResponse(status_code=200, content=jsonable_encoder(result))
@@ -81,22 +74,8 @@ def get_movie(id: int = Path(ge=1, le=200)) -> Movie:
 @movie_router.get('/movies/', tags=["movies"], response_model=List[Movie])
 def get_movies_by_category(category: str = Query(min_length=6, max_length=20)) -> List[Movie]:
     """Function Get movies by category"""
-    # return category, year
-    # for item in movies:
-    #     if item["category"] == category:
-    #         return item
-    # return []
-
-    # # My Solution
-    # movie = list(filter(lambda item: item["category"] == category, movies))
-    # return movie if len(movie) > 0 else []
-
-    # Solution of the teacher
-    # return [item for item in movies if item['category'] == category]
-    # data = [item for item in movies if item['category'] == category]
-    # return JSONResponse(content=data)
     db = Session()
-    result = db.query(MovieModel).filter(MovieModel.category == category).all()
+    result = MovieService(db).get_movies_by_category(category)
     if not result:
         return JSONResponse(status_code=404, content={'message': "Not Found"})
     return JSONResponse(status_code=200, content=jsonable_encoder(result))
