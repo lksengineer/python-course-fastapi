@@ -1,5 +1,4 @@
 # Standar Libraries
-from pydantic import BaseModel
 
 # Project-related libraries (installed via pip)
 from fastapi import APIRouter
@@ -7,15 +6,9 @@ from fastapi.responses import JSONResponse
 
 # Own modules
 from jwt_manager import create_token
-
+from schemas.user import User
 
 user_router = APIRouter()
-
-
-class User(BaseModel):
-    """User class. Sub class"""
-    email: str
-    password: str
 
 
 @user_router.post('/login', tags=["auth"])
